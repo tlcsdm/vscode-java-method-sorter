@@ -178,6 +178,173 @@ public class MyClass {
         failed++;
     }
     
+    // Test 6: JavaParser - Skips static initializer blocks
+    try {
+        const source = `
+public class MyClass {
+    static {
+        System.out.println("Static block");
+    }
+    
+    public void methodA() {
+        System.out.println("A");
+    }
+}`;
+        const parser = new JavaParser(source);
+        const result = parser.parse();
+        // Should only find methodA, not println from static block
+        if (result && result.methods.length === 1 && result.methods[0].name === 'methodA') {
+            console.log('✓ Test 6 passed: JavaParser skips static initializer blocks');
+            passed++;
+        } else {
+            console.log('✗ Test 6 failed: Expected 1 method (methodA), got', result?.methods.map(m => m.name));
+            failed++;
+        }
+    } catch (e) {
+        console.log('✗ Test 6 failed with error:', e);
+        failed++;
+    }
+    
+    // Test 7: JavaParser - Skips instance initializer blocks
+    try {
+        const source = `
+public class MyClass {
+    {
+        System.out.println("Instance block");
+    }
+    
+    public void methodA() {
+        System.out.println("A");
+    }
+}`;
+        const parser = new JavaParser(source);
+        const result = parser.parse();
+        // Should only find methodA, not println from instance block
+        if (result && result.methods.length === 1 && result.methods[0].name === 'methodA') {
+            console.log('✓ Test 7 passed: JavaParser skips instance initializer blocks');
+            passed++;
+        } else {
+            console.log('✗ Test 7 failed: Expected 1 method (methodA), got', result?.methods.map(m => m.name));
+            failed++;
+        }
+    } catch (e) {
+        console.log('✗ Test 7 failed with error:', e);
+        failed++;
+    }
+    
+    // Test 8: JavaParser - Skips inner class methods
+    try {
+        const source = `
+public class MyClass {
+    public void outerMethod() {
+        System.out.println("Outer");
+    }
+    
+    public static class Inner {
+        public void innerMethod() {
+            System.out.println("Inner");
+        }
+    }
+}`;
+        const parser = new JavaParser(source);
+        const result = parser.parse();
+        // Should only find outerMethod, not innerMethod from inner class
+        if (result && result.methods.length === 1 && result.methods[0].name === 'outerMethod') {
+            console.log('✓ Test 8 passed: JavaParser skips inner class methods');
+            passed++;
+        } else {
+            console.log('✗ Test 8 failed: Expected 1 method (outerMethod), got', result?.methods.map(m => m.name));
+            failed++;
+        }
+    } catch (e) {
+        console.log('✗ Test 8 failed with error:', e);
+        failed++;
+    }
+    
+    // Test 9: JavaMethodSorter - Preserves inner classes in output
+    try {
+        const source = `
+public class MyClass {
+    public void outerMethod() {
+        System.out.println("Outer");
+    }
+    
+    public static class Inner {
+        public void innerMethod() {
+            System.out.println("Inner");
+        }
+    }
+}`;
+        const options: SortingOptions = {
+            sortingStrategy: 'depth-first',
+            applyWorkingListHeuristics: false,
+            respectBeforeAfterRelation: false,
+            clusterOverloadedMethods: false,
+            clusterGetterSetter: false,
+            separateByAccessLevel: false,
+            separateConstructors: false,
+            applyLexicalOrdering: false
+        };
+        const sorter = new JavaMethodSorter(options);
+        const sorted = sorter.sort(source);
+        
+        // The inner class should be preserved in the output
+        if (sorted.includes('public static class Inner') && sorted.includes('innerMethod')) {
+            console.log('✓ Test 9 passed: Inner classes preserved in output');
+            passed++;
+        } else {
+            console.log('✗ Test 9 failed: Inner class not preserved in output');
+            failed++;
+        }
+    } catch (e) {
+        console.log('✗ Test 9 failed with error:', e);
+        failed++;
+    }
+    
+    // Test 10: JavaMethodSorter - Preserves static and instance initializer blocks
+    try {
+        const source = `
+public class MyClass {
+    static {
+        System.out.println("Static block");
+    }
+    
+    {
+        System.out.println("Instance block");
+    }
+    
+    public void methodA() {
+        System.out.println("A");
+    }
+}`;
+        const options: SortingOptions = {
+            sortingStrategy: 'depth-first',
+            applyWorkingListHeuristics: false,
+            respectBeforeAfterRelation: false,
+            clusterOverloadedMethods: false,
+            clusterGetterSetter: false,
+            separateByAccessLevel: false,
+            separateConstructors: false,
+            applyLexicalOrdering: false
+        };
+        const sorter = new JavaMethodSorter(options);
+        const sorted = sorter.sort(source);
+        
+        // Both initializer blocks should be preserved
+        if (sorted.includes('static {') && 
+            sorted.includes('System.out.println("Static block")') &&
+            sorted.includes('System.out.println("Instance block")')) {
+            console.log('✓ Test 10 passed: Initializer blocks preserved in output');
+            passed++;
+        } else {
+            console.log('✗ Test 10 failed: Initializer blocks not preserved');
+            failed++;
+        }
+    } catch (e) {
+        console.log('✗ Test 10 failed with error:', e);
+        failed++;
+    }
+    
     console.log(`\nResults: ${passed} passed, ${failed} failed`);
 }
 

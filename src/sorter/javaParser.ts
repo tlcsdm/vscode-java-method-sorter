@@ -1,6 +1,14 @@
 import { JavaMethod, JavaClass, AccessLevel } from './types';
 
 /**
+ * Represents a region in source code that should be skipped
+ */
+interface SkipRegion {
+    start: number;
+    end: number;
+}
+
+/**
  * Parser for Java source code to extract methods and class structure
  */
 export class JavaParser {
@@ -20,8 +28,14 @@ export class JavaParser {
             return null;
         }
 
-        const methods = this.extractMethods(className);
-        const { preMethodsContent, postMethodsContent } = this.extractNonMethodContent(methods);
+        // Find the main class body boundaries
+        const classBodyBounds = this.findMainClassBody(className);
+        if (!classBodyBounds) {
+            return null;
+        }
+
+        const methods = this.extractMethods(className, classBodyBounds);
+        const { preMethodsContent, postMethodsContent } = this.extractNonMethodContent(methods, classBodyBounds);
 
         return {
             name: className,
@@ -41,41 +55,165 @@ export class JavaParser {
     }
 
     /**
+     * Find the boundaries of the main class body
+     */
+    private findMainClassBody(className: string): { start: number; end: number; bodyStart: number } | null {
+        // Find the main class declaration
+        const classPattern = new RegExp(`(?:public\\s+)?(?:abstract\\s+)?(?:final\\s+)?class\\s+${className}\\s*(?:extends\\s+\\w+)?(?:\\s+implements\\s+[\\w\\s,]+)?\\s*\\{`);
+        const match = this.source.match(classPattern);
+        if (!match) {
+            return null;
+        }
+
+        const classStart = match.index!;
+        const bodyStart = classStart + match[0].length - 1; // Position of opening brace
+        const bodyEnd = this.findMatchingBrace(bodyStart);
+
+        if (bodyEnd === -1) {
+            return null;
+        }
+
+        return { start: classStart, end: bodyEnd, bodyStart };
+    }
+
+    /**
+     * Find all regions to skip: nested classes and initializer blocks
+     */
+    private findSkipRegions(classBodyBounds: { start: number; end: number; bodyStart: number }): SkipRegion[] {
+        const skipRegions: SkipRegion[] = [];
+        const bodyContent = this.source.substring(classBodyBounds.bodyStart + 1, classBodyBounds.end);
+        const offset = classBodyBounds.bodyStart + 1;
+
+        // Find nested classes (static and non-static inner classes)
+        const nestedClassPattern = /(?:(?:public|protected|private|static|final|abstract)\s+)*class\s+\w+\s*(?:extends\s+\w+)?(?:\s+implements\s+[\w\s,]+)?\s*\{/g;
+        let match;
+        while ((match = nestedClassPattern.exec(bodyContent)) !== null) {
+            const start = offset + match.index;
+            const bracePos = start + match[0].length - 1;
+            const end = this.findMatchingBrace(bracePos);
+            if (end !== -1) {
+                skipRegions.push({ start, end: end + 1 });
+                // Skip past this class to avoid finding inner classes within inner classes
+                nestedClassPattern.lastIndex = end - offset + 1;
+            }
+        }
+
+        // Find static initializer blocks: "static {"
+        const staticInitPattern = /\bstatic\s*\{/g;
+        while ((match = staticInitPattern.exec(bodyContent)) !== null) {
+            // Make sure this is a standalone static block, not "static class" or "static method"
+            const beforeMatch = bodyContent.substring(0, match.index);
+            const lastNewline = beforeMatch.lastIndexOf('\n');
+            const lineStart = lastNewline === -1 ? 0 : lastNewline + 1;
+            const lineBeforeStatic = bodyContent.substring(lineStart, match.index).trim();
+            
+            // If there's other code on the same line before "static", skip this match
+            if (lineBeforeStatic.length > 0 && !lineBeforeStatic.startsWith('//') && !lineBeforeStatic.startsWith('*')) {
+                continue;
+            }
+
+            const start = offset + match.index;
+            const bracePos = start + match[0].length - 1;
+            const end = this.findMatchingBrace(bracePos);
+            if (end !== -1) {
+                skipRegions.push({ start, end: end + 1 });
+            }
+        }
+
+        // Find instance initializer blocks: standalone "{"
+        // These are blocks that start with just "{" at the beginning of a line
+        const lines = bodyContent.split('\n');
+        let pos = 0;
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmedLine = line.trim();
+            
+            // Instance initializer: a line with just "{"
+            if (trimmedLine === '{') {
+                const start = offset + pos + line.indexOf('{');
+                const end = this.findMatchingBrace(start);
+                if (end !== -1) {
+                    // Make sure this isn't already covered by a skip region
+                    if (!skipRegions.some(r => start >= r.start && start <= r.end)) {
+                        skipRegions.push({ start, end: end + 1 });
+                    }
+                }
+            }
+            
+            pos += line.length + 1; // +1 for newline
+        }
+
+        return skipRegions;
+    }
+
+    /**
+     * Check if a position is within any skip region
+     */
+    private isInSkipRegion(pos: number, skipRegions: SkipRegion[]): boolean {
+        return skipRegions.some(r => pos >= r.start && pos < r.end);
+    }
+
+    /**
      * Extract all methods from the source
      */
-    private extractMethods(className: string): JavaMethod[] {
+    private extractMethods(className: string, classBodyBounds: { start: number; end: number; bodyStart: number }): JavaMethod[] {
         const methods: JavaMethod[] = [];
+        const skipRegions = this.findSkipRegions(classBodyBounds);
         const methodPattern = this.createMethodPattern(className);
         
         let match;
-        let lastIndex = 0;
+        let lastMethodEnd = classBodyBounds.bodyStart + 1; // Start after opening brace
         const regex = new RegExp(methodPattern, 'g');
         
-        while ((match = regex.exec(this.source)) !== null) {
-            const methodStart = match.index;
-            const leadingContent = this.extractLeadingContent(methodStart, lastIndex);
-            const bodyStart = this.source.indexOf('{', match.index + match[0].length - 1);
+        // Only search within the main class body
+        const searchArea = this.source.substring(classBodyBounds.bodyStart + 1, classBodyBounds.end);
+        const searchOffset = classBodyBounds.bodyStart + 1;
+        
+        while ((match = regex.exec(searchArea)) !== null) {
+            // Calculate the actual method start (after the line start pattern)
+            const rawMatchStart = searchOffset + match.index;
+            const matchedText = match[0];
             
-            if (bodyStart === -1) {
+            // Find where the actual method declaration starts (skip only the initial newline from pattern)
+            // We want to preserve leading whitespace/indentation on the same line
+            let actualMethodStart = rawMatchStart;
+            if (this.source[actualMethodStart] === '\n') {
+                actualMethodStart++;
+            }
+            
+            // Skip if this match is within a skip region (nested class or initializer block)
+            if (this.isInSkipRegion(actualMethodStart, skipRegions)) {
+                continue;
+            }
+            
+            const leadingContent = this.extractLeadingContent(actualMethodStart, lastMethodEnd, skipRegions);
+            const bodyStart = this.source.indexOf('{', rawMatchStart + matchedText.length - 1);
+            
+            if (bodyStart === -1 || bodyStart >= classBodyBounds.end) {
                 // Abstract method or interface method
-                const semicolon = this.source.indexOf(';', match.index);
-                if (semicolon !== -1) {
-                    const method = this.createMethodFromAbstract(match, methodStart, semicolon + 1, leadingContent, className);
+                const semicolon = this.source.indexOf(';', actualMethodStart);
+                if (semicolon !== -1 && semicolon < classBodyBounds.end) {
+                    const method = this.createMethodFromAbstract(match, actualMethodStart, semicolon + 1, leadingContent, className);
                     methods.push(method);
-                    lastIndex = semicolon + 1;
+                    lastMethodEnd = semicolon + 1;
                 }
                 continue;
             }
 
-            const bodyEnd = this.findMatchingBrace(bodyStart);
-            if (bodyEnd === -1) {
+            // Skip if body start is in a skip region
+            if (this.isInSkipRegion(bodyStart, skipRegions)) {
                 continue;
             }
 
-            const method = this.createMethod(match, methodStart, bodyEnd + 1, leadingContent, className);
+            const bodyEnd = this.findMatchingBrace(bodyStart);
+            if (bodyEnd === -1 || bodyEnd >= classBodyBounds.end) {
+                continue;
+            }
+
+            const method = this.createMethod(match, actualMethodStart, bodyEnd + 1, leadingContent, className);
             methods.push(method);
-            lastIndex = bodyEnd + 1;
-            regex.lastIndex = lastIndex;
+            lastMethodEnd = bodyEnd + 1;
+            regex.lastIndex = bodyEnd - searchOffset + 1;
         }
 
         // Set original positions
@@ -91,6 +229,7 @@ export class JavaParser {
      */
     private createMethodPattern(className: string): string {
         // Match method modifiers, return type, name, and parameters
+        // Must start with either a modifier or the return type, not arbitrary text
         const modifiers = '(?:(?:public|protected|private|static|final|abstract|synchronized|native|strictfp)\\s+)*';
         const typeParams = '(?:<[^>]+>\\s+)?';
         const returnType = '(?:[\\w\\[\\]<>,\\s\\.]+\\s+)?';
@@ -99,15 +238,27 @@ export class JavaParser {
         const throwsClause = '(?:\\s+throws\\s+[\\w\\s,\\.]+)?';
         const bodyOrSemi = '(?:\\s*\\{|\\s*;)';
         
-        return `${modifiers}${typeParams}${returnType}${methodName}${params}${throwsClause}${bodyOrSemi}`;
+        // Require method declaration to start at beginning of line (optionally with whitespace)
+        const lineStart = '(?:^|\\n)\\s*';
+        
+        return `${lineStart}${modifiers}${typeParams}${returnType}${methodName}${params}${throwsClause}${bodyOrSemi}`;
     }
 
     /**
      * Extract leading comments and annotations before a method
      */
-    private extractLeadingContent(methodStart: number, searchStart: number): string {
+    private extractLeadingContent(methodStart: number, searchStart: number, skipRegions: SkipRegion[]): string {
+        // Find the effective search start, skipping any skip regions
+        let effectiveStart = searchStart;
+        for (const region of skipRegions) {
+            if (region.start >= searchStart && region.end <= methodStart) {
+                // This skip region is between searchStart and methodStart
+                effectiveStart = Math.max(effectiveStart, region.end);
+            }
+        }
+
         // Look backwards from methodStart to find comments and annotations
-        const textBefore = this.source.substring(searchStart, methodStart);
+        const textBefore = this.source.substring(effectiveStart, methodStart);
         
         // Find the last newline before annotations/comments
         const lines = textBefore.split('\n');
@@ -323,7 +474,7 @@ export class JavaParser {
     /**
      * Extract content before and after methods
      */
-    private extractNonMethodContent(methods: JavaMethod[]): { preMethodsContent: string; postMethodsContent: string } {
+    private extractNonMethodContent(methods: JavaMethod[], classBodyBounds: { start: number; end: number; bodyStart: number }): { preMethodsContent: string; postMethodsContent: string } {
         if (methods.length === 0) {
             return { preMethodsContent: this.source, postMethodsContent: '' };
         }
@@ -331,9 +482,9 @@ export class JavaParser {
         // Find the start of the first method (including its leading content)
         let firstMethodStart = methods[0].startPos;
         const leadingContent = methods[0].leadingContent;
-        if (leadingContent) {
+        if (leadingContent && leadingContent.trim()) {
             const leadingIndex = this.source.lastIndexOf(leadingContent.trim(), firstMethodStart);
-            if (leadingIndex !== -1) {
+            if (leadingIndex !== -1 && leadingIndex > classBodyBounds.bodyStart) {
                 firstMethodStart = leadingIndex;
             }
         }
