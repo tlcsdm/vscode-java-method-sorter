@@ -1,0 +1,155 @@
+{
+  "name": "tlcsdm-java-method-sorter",
+  "displayName": "Java Method Sorter",
+  "description": "Sort methods in Java classes to increase code readability",
+  "version": "1.0.0",
+  "publisher": "unknowIfGuestInDream",
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tlcsdm/vscode-java-method-sorter"
+  },
+  "bugs": {
+    "url": "https://github.com/tlcsdm/vscode-java-method-sorter/issues"
+  },
+  "homepage": "https://github.com/tlcsdm/vscode-java-method-sorter#readme",
+  "engines": {
+    "vscode": "^1.108.0"
+  },
+  "categories": [
+    "Formatters",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "java",
+    "method",
+    "sorter",
+    "sort",
+    "clean code"
+  ],
+  "activationEvents": [
+    "onLanguage:java"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "tlcsdm.methodsorter.sortMethods",
+        "title": "Sort Methods"
+      },
+      {
+        "command": "tlcsdm.methodsorter.shuffleMethodsRandomly",
+        "title": "Shuffle Methods Randomly"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "tlcsdm.submenu",
+        "label": "tlcsdm"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "submenu": "tlcsdm.submenu",
+          "group": "tlcsdm",
+          "when": "editorLangId == java"
+        }
+      ],
+      "tlcsdm.submenu": [
+        {
+          "command": "tlcsdm.methodsorter.sortMethods",
+          "when": "editorLangId == java",
+          "group": "methodsorter"
+        },
+        {
+          "command": "tlcsdm.methodsorter.shuffleMethodsRandomly",
+          "when": "editorLangId == java",
+          "group": "methodsorter"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "tlcsdm.methodsorter.sortMethods",
+        "key": "alt+s",
+        "mac": "alt+s",
+        "when": "editorLangId == java"
+      }
+    ],
+    "configuration": {
+      "title": "Java Method Sorter",
+      "properties": {
+        "tlcsdm.methodsorter.sortingStrategy": {
+          "type": "string",
+          "default": "depth-first",
+          "enum": [
+            "depth-first",
+            "breadth-first"
+          ],
+          "enumDescriptions": [
+            "Depth-first invocation ordering",
+            "Breadth-first invocation ordering"
+          ],
+          "description": "Invocation ordering strategy"
+        },
+        "tlcsdm.methodsorter.applyWorkingListHeuristics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Apply heuristics to determine start points for invocation ordering"
+        },
+        "tlcsdm.methodsorter.respectBeforeAfterRelation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Respect before/after relation in method ordering"
+        },
+        "tlcsdm.methodsorter.clusterOverloadedMethods": {
+          "type": "boolean",
+          "default": false,
+          "description": "Keep overloaded methods together"
+        },
+        "tlcsdm.methodsorter.clusterGetterSetter": {
+          "type": "boolean",
+          "default": false,
+          "description": "Keep getter and setter methods together"
+        },
+        "tlcsdm.methodsorter.separateByAccessLevel": {
+          "type": "boolean",
+          "default": true,
+          "description": "Separate methods by access level (public, protected, package, private)"
+        },
+        "tlcsdm.methodsorter.separateConstructors": {
+          "type": "boolean",
+          "default": true,
+          "description": "Separate constructors from other methods"
+        },
+        "tlcsdm.methodsorter.applyLexicalOrdering": {
+          "type": "boolean",
+          "default": true,
+          "description": "Apply lexical (alphabetical) ordering as a secondary sort"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test --config ./.vscode-test.json"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.108.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.2.2",
+    "eslint": "^9.17.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.2"
+  },
+  "license": "MIT"
+}
