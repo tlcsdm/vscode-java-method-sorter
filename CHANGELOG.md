@@ -1,7 +1,5 @@
 # Change Log
 
-All notable changes to the "Java Method Sorter" extension will be documented in this file.
-
 ## [1.0.0] - 2026-01-10
 
 ### Added

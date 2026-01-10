@@ -2,8 +2,6 @@
 
 A Visual Studio Code extension that sorts methods in Java classes to increase code readability.
 
-This extension is inspired by the [eclipse-method-sorter](https://github.com/tlcsdm/eclipse-method-sorter) plugin and brings similar functionality to VS Code.
-
 ## Features
 
 - Sort methods in Java classes based on multiple criteria:
@@ -62,29 +60,9 @@ When all options are enabled, methods are sorted in the following order:
 5. **Lexical order** - Alphabetical ordering of method names
 6. **Original position** - Maintains original order when all other criteria are equal
 
-## Requirements
-
-- Visual Studio Code 1.108.0 or later
-- Java source files (.java)
-
-## Known Issues
-
-Please report issues on the [GitHub issue tracker](https://github.com/tlcsdm/vscode-java-method-sorter/issues).
-
-## Release Notes
-
-### 1.0.0
-
-Initial release of Java Method Sorter.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Related Projects
+* [eclipse-method-sorter](https://github.com/tlcsdm/eclipse-method-sorter)
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Credits
-
-This extension is inspired by the [eclipse-method-sorter](https://github.com/tlcsdm/eclipse-method-sorter) plugin, which is a fork of [Clean-Code-Method-Sorter](https://github.com/parzonka/Clean-Code-Method-Sorter).
