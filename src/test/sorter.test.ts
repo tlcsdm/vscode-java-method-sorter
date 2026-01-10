@@ -1,4 +1,4 @@
-import { JavaMethodSorter, JavaParser, SortingOptions } from './index';
+import { JavaMethodSorter, JavaParser, SortingOptions } from '../sorter';
 
 /**
  * Simple test runner for sorter logic
