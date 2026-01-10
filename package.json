@@ -69,14 +69,6 @@
         }
       ]
     },
-    "keybindings": [
-      {
-        "command": "tlcsdm.methodsorter.sortMethods",
-        "key": "alt+s",
-        "mac": "alt+s",
-        "when": "editorLangId == java"
-      }
-    ],
     "configuration": {
       "title": "Java Method Sorter",
       "properties": {
