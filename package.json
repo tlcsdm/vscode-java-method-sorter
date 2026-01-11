@@ -1,6 +1,6 @@
 {
   "name": "tlcsdm-java-method-sorter",
-  "displayName": "Java Method Sorter",
+  "displayName": "Tlcsdm Java Method Sorter",
   "description": "Sort methods in Java classes to increase code readability",
   "version": "1.0.0",
   "publisher": "unknowIfGuestInDream",
