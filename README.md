@@ -60,6 +60,47 @@ When all options are enabled, methods are sorted in the following order:
 5. **Lexical order** - Alphabetical ordering of method names
 6. **Original position** - Maintains original order when all other criteria are equal
 
+## Installation
+
+### From VS Code Marketplace
+1. Open VS Code
+2. Go to Extensions (`Ctrl+Shift+X`)
+3. Search for "Translation"
+4. Click Install
+
+### From VSIX File
+1. Download the `.vsix` file from [Releases](https://github.com/tlcsdm/vscode-java-method-sorter/releases)
+2. In VS Code, open Command Palette (`Ctrl+Shift+P`)
+3. Search for "Extensions: Install from VSIX..."
+4. Select the downloaded `.vsix` file
+
+### From Jenkins
+Download from [Jenkins](https://jenkins.tlcsdm.com/job/vscode-plugin/job/vscode-java-method-sorter/)
+
+## Build
+
+This project uses TypeScript and npm (Node.js 22).
+
+```bash
+# Install dependencies
+npm install
+
+# Compile
+npm run compile
+
+# Watch mode (for development)
+npm run watch
+
+# Lint
+npm run lint
+
+# Package
+npx @vscode/vsce package
+
+# Test
+npm run test
+```
+
 ## Related Projects
 * [eclipse-method-sorter](https://github.com/tlcsdm/eclipse-method-sorter)
 
