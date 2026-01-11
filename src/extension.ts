@@ -2,6 +2,9 @@ import * as vscode from 'vscode';
 import { JavaMethodSorter } from './sorter/javaMethodSorter';
 import { SortingOptions } from './sorter/types';
 
+// Extension ID for Red Hat Java Language Support
+const REDHAT_JAVA_EXTENSION_ID = 'redhat.java';
+
 /**
  * Get sorting options from VS Code configuration
  */
@@ -17,6 +20,31 @@ function getSortingOptions(): SortingOptions {
         separateConstructors: config.get<boolean>('separateConstructors', true),
         applyLexicalOrdering: config.get<boolean>('applyLexicalOrdering', true)
     };
+}
+
+/**
+ * Check if the Red Hat Java extension is installed and active
+ */
+function isRedHatJavaExtensionAvailable(): boolean {
+    const extension = vscode.extensions.getExtension(REDHAT_JAVA_EXTENSION_ID);
+    return extension !== undefined;
+}
+
+/**
+ * Format the document using Red Hat Java extension if available
+ */
+async function formatDocumentWithRedHatJava(): Promise<void> {
+    if (!isRedHatJavaExtensionAvailable()) {
+        return;
+    }
+
+    try {
+        // Execute the format document command
+        await vscode.commands.executeCommand('editor.action.formatDocument');
+    } catch {
+        // Silently ignore formatting errors - the sorting is complete
+        console.log('Failed to format document with Red Hat Java extension');
+    }
 }
 
 /**
@@ -54,6 +82,10 @@ async function sortMethods(): Promise<void> {
         );
         edit.replace(document.uri, fullRange, sortedText);
         await vscode.workspace.applyEdit(edit);
+
+        // Format document with Red Hat Java extension if available
+        await formatDocumentWithRedHatJava();
+
         vscode.window.showInformationMessage('Methods sorted successfully');
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to sort methods';
@@ -95,6 +127,10 @@ async function shuffleMethodsRandomly(): Promise<void> {
         );
         edit.replace(document.uri, fullRange, shuffledText);
         await vscode.workspace.applyEdit(edit);
+
+        // Format document with Red Hat Java extension if available
+        await formatDocumentWithRedHatJava();
+
         vscode.window.showInformationMessage('Methods shuffled randomly');
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to shuffle methods';

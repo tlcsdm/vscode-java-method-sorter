@@ -299,9 +299,9 @@ export class JavaMethodSorter {
             return normalizedFullText;
         });
 
-        // Remove trailing whitespace from preContent to avoid duplicate indentation
-        // since leadingContent already includes the proper indentation
-        const normalizedPreContent = preContent.replace(/[ \t]+$/, '');
+        // Normalize preContent: remove trailing whitespace and excess newlines
+        // Add consistent single blank line before first method
+        const normalizedPreContent = preContent.replace(/\s+$/, '') + '\n\n';
 
         return normalizedPreContent + methodTexts.join('\n\n') + postContent;
     }
