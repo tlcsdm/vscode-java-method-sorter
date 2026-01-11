@@ -23,7 +23,7 @@ function getSortingOptions(): SortingOptions {
 }
 
 /**
- * Check if the Red Hat Java extension is installed and active
+ * Check if the Red Hat Java extension is installed
  */
 function isRedHatJavaExtensionAvailable(): boolean {
     const extension = vscode.extensions.getExtension(REDHAT_JAVA_EXTENSION_ID);
@@ -43,7 +43,6 @@ async function formatDocumentWithRedHatJava(): Promise<void> {
         await vscode.commands.executeCommand('editor.action.formatDocument');
     } catch {
         // Silently ignore formatting errors - the sorting is complete
-        console.log('Failed to format document with Red Hat Java extension');
     }
 }
 
