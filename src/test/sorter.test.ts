@@ -425,6 +425,51 @@ public class MyClass {
         failed++;
     }
     
+    // Test 13: Multiple blank lines in source are normalized to single blank line
+    try {
+        const source = `public class MyClass {
+
+
+    // Comment with 2 blank lines before it
+    private void methodA() {
+        System.out.println("A");
+    }
+
+
+
+    // Comment with 3 blank lines before it
+    public void methodB() {
+        System.out.println("B");
+    }
+}`;
+        const options: SortingOptions = {
+            sortingStrategy: 'depth-first',
+            applyWorkingListHeuristics: false,
+            respectBeforeAfterRelation: false,
+            clusterOverloadedMethods: false,
+            clusterGetterSetter: false,
+            separateByAccessLevel: true,
+            separateConstructors: false,
+            applyLexicalOrdering: false
+        };
+        const sorter = new JavaMethodSorter(options);
+        const sorted = sorter.sort(source);
+        
+        // Should not have more than 2 consecutive newlines (1 blank line)
+        const hasMultipleBlankLines = /\n{3,}/.test(sorted);
+        if (!hasMultipleBlankLines) {
+            console.log('✓ Test 13 passed: Multiple blank lines in source are normalized');
+            passed++;
+        } else {
+            console.log('✗ Test 13 failed: Found multiple blank lines in output');
+            console.log('Sorted output:', sorted);
+            failed++;
+        }
+    } catch (e) {
+        console.log('✗ Test 13 failed with error:', e);
+        failed++;
+    }
+    
     console.log(`\nResults: ${passed} passed, ${failed} failed`);
 }
 
