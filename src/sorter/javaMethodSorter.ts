@@ -287,15 +287,23 @@ export class JavaMethodSorter {
      */
     private reconstructSource(preContent: string, methods: JavaMethod[], postContent: string): string {
         const methodTexts = methods.map(m => {
-            // Combine leading content with method body
-            const leading = m.leadingContent.trim();
-            if (leading) {
-                return leading + '\n' + m.fullText;
+            // Normalize fullText: remove leading newlines but preserve indentation
+            const normalizedFullText = m.fullText.replace(/^\n+/, '');
+            
+            // Preserve leading content with indentation, only trim leading blank lines
+            // This keeps the comment/annotation indentation intact
+            const leading = m.leadingContent.replace(/^\n+/, '');
+            if (leading.trim()) {
+                return leading + normalizedFullText;
             }
-            return m.fullText;
+            return normalizedFullText;
         });
 
-        return preContent + methodTexts.join('\n\n') + postContent;
+        // Remove trailing whitespace from preContent to avoid duplicate indentation
+        // since leadingContent already includes the proper indentation
+        const normalizedPreContent = preContent.replace(/[ \t]+$/, '');
+
+        return normalizedPreContent + methodTexts.join('\n\n') + postContent;
     }
 
     /**

@@ -345,6 +345,86 @@ public class MyClass {
         failed++;
     }
     
+    // Test 11: Comment indentation is preserved after sorting
+    try {
+        const source = `public class MyClass {
+    // 静态方法
+    public static void log(String msg) {
+        System.out.println("LOG: " + msg);
+    }
+
+    // 受保护方法
+    protected void finalizeTask() {
+        System.out.println("Finalize");
+    }
+}`;
+        const options: SortingOptions = {
+            sortingStrategy: 'depth-first',
+            applyWorkingListHeuristics: false,
+            respectBeforeAfterRelation: false,
+            clusterOverloadedMethods: false,
+            clusterGetterSetter: false,
+            separateByAccessLevel: false,
+            separateConstructors: false,
+            applyLexicalOrdering: false
+        };
+        const sorter = new JavaMethodSorter(options);
+        const sorted = sorter.sort(source);
+        
+        // Comments should maintain their indentation (4 spaces before //)
+        if (sorted.includes('    // 静态方法') && sorted.includes('    // 受保护方法')) {
+            console.log('✓ Test 11 passed: Comment indentation is preserved');
+            passed++;
+        } else {
+            console.log('✗ Test 11 failed: Comment indentation not preserved');
+            console.log('Sorted output:', sorted);
+            failed++;
+        }
+    } catch (e) {
+        console.log('✗ Test 11 failed with error:', e);
+        failed++;
+    }
+    
+    // Test 12: No double blank lines between methods after sorting
+    try {
+        const source = `public class MyClass {
+    protected void methodA() {
+        System.out.println("A");
+    }
+
+    private void methodB() {
+        System.out.println("B");
+    }
+}`;
+        const options: SortingOptions = {
+            sortingStrategy: 'depth-first',
+            applyWorkingListHeuristics: false,
+            respectBeforeAfterRelation: false,
+            clusterOverloadedMethods: false,
+            clusterGetterSetter: false,
+            separateByAccessLevel: true,
+            separateConstructors: false,
+            applyLexicalOrdering: false
+        };
+        const sorter = new JavaMethodSorter(options);
+        const sorted = sorter.sort(source);
+        
+        // Should not have triple newlines (two blank lines) between methods
+        // Check that closing braces are followed by at most one blank line
+        const hasDoubleBlankLines = /\}\n\n\n/.test(sorted);
+        if (!hasDoubleBlankLines) {
+            console.log('✓ Test 12 passed: No double blank lines between methods');
+            passed++;
+        } else {
+            console.log('✗ Test 12 failed: Found double blank lines between methods');
+            console.log('Sorted output:', sorted);
+            failed++;
+        }
+    } catch (e) {
+        console.log('✗ Test 12 failed with error:', e);
+        failed++;
+    }
+    
     console.log(`\nResults: ${passed} passed, ${failed} failed`);
 }
 
