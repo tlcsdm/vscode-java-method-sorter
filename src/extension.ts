@@ -153,8 +153,6 @@ export function activate(context: vscode.ExtensionContext): void {
     );
 
     context.subscriptions.push(sortMethodsCmd, shuffleMethodsCmd);
-
-    console.log('Java Method Sorter extension is now active');
 }
 
 /**
