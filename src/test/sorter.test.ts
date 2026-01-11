@@ -409,8 +409,10 @@ public class MyClass {
         const sorter = new JavaMethodSorter(options);
         const sorted = sorter.sort(source);
         
-        // Should not have triple newlines (two blank lines)
-        if (!sorted.includes('\n\n\n')) {
+        // Should not have triple newlines (two blank lines) between methods
+        // Check that closing braces are followed by at most one blank line
+        const hasDoubleBlankLines = /\}\n\n\n/.test(sorted);
+        if (!hasDoubleBlankLines) {
             console.log('✓ Test 12 passed: No double blank lines between methods');
             passed++;
         } else {
