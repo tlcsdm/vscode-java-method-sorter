@@ -51,6 +51,7 @@ jobs:
           
       - name: Update engines.vscode
         if: steps.check_update.outputs.types_vscode_updated == 'true'
+        id: update_engine
         run: |
           TYPES_VERSION="${{ steps.check_update.outputs.types_version }}"
           
@@ -74,18 +75,22 @@ jobs:
               pkg.engines.vscode = newEngine;
               fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
               console.log('Updated engines.vscode');
-              process.exit(0);
+              console.log('changes_made=true');
             } else {
               console.log('No update needed');
-              process.exit(1);
+              console.log('changes_made=false');
             }
-          "
+          " | tee /tmp/update-output.txt
           
-          # Store the exit code
-          echo "update_needed=$?" >> $GITHUB_ENV
+          # Extract the changes_made value from output
+          if grep -q "changes_made=true" /tmp/update-output.txt; then
+            echo "changes_made=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes_made=false" >> $GITHUB_OUTPUT
+          fi
           
       - name: Commit changes
-        if: steps.check_update.outputs.types_vscode_updated == 'true' && env.update_needed == '0'
+        if: steps.check_update.outputs.types_vscode_updated == 'true' && steps.update_engine.outputs.changes_made == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
