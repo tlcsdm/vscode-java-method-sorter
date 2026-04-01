@@ -65,7 +65,7 @@ When all options are enabled, methods are sorted in the following order:
 ### From VS Code Marketplace
 1. Open VS Code
 2. Go to Extensions (`Ctrl+Shift+X`)
-3. Search for "Translation"
+3. Search for "tlcsdm-java-method-sorter"
 4. Click Install
 
 ### From VSIX File
