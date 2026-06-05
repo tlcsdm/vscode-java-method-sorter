@@ -129,7 +129,7 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test --config ./.vscode-test.json"
+    "test": "vscode-test --config ./.vscode-test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
