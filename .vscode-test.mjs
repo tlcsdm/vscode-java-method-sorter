@@ -1,5 +1,5 @@
 import { defineConfig } from '@vscode/test-cli';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -7,6 +7,11 @@ import { join } from 'node:path';
 // 103-character Unix domain socket path limit on macOS, which otherwise causes
 // "IPC handle ... is longer than 103 chars" / EINVAL errors in CI.
 const userDataDir = mkdtempSync(join(tmpdir(), 'vsct-'));
+
+// Remove the temporary user-data-dir when the test process exits.
+process.on('exit', () => {
+  rmSync(userDataDir, { recursive: true, force: true });
+});
 
 export default defineConfig({
   version: 'stable',
