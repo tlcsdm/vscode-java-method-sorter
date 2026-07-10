@@ -129,7 +129,8 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test --config ./.vscode-test.mjs"
+    "test": "vscode-test --config ./.vscode-test.mjs",
+    "postinstall": "node scripts/postinstall.js"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -140,8 +141,17 @@
     "@vscode/test-electron": "^3.0.0",
     "@vscode/vsce": "^3.9.2",
     "eslint": "^10.6.0",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.63.0"
+    "typescript": "^7.0.2",
+    "typescript-eslint": "^8.63.0",
+    "typescript-compat": "npm:typescript@~6.0.3"
+  },
+  "overrides": {
+    "typescript-eslint": {
+      "typescript": "~6.0.3"
+    },
+    "ts-api-utils": {
+      "typescript": "~6.0.3"
+    }
   },
   "license": "MIT"
 }
