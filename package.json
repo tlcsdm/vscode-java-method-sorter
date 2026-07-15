@@ -142,16 +142,8 @@
     "@vscode/vsce": "^3.9.2",
     "eslint": "^10.7.0",
     "typescript": "^7.0.2",
-    "typescript-eslint": "^8.63.0",
+    "typescript-eslint": "^8.64.0",
     "typescript-compat": "npm:typescript@~6.0.3"
-  },
-  "overrides": {
-    "typescript-eslint": {
-      "typescript": "~6.0.3"
-    },
-    "ts-api-utils": {
-      "typescript": "~6.0.3"
-    }
   },
   "license": "MIT"
 }
