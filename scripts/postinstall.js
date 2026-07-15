@@ -9,9 +9,9 @@
  * intentionally keeps TypeScript 7 for compilation while providing TypeScript 6
  * only to the ESLint tooling via nested node_modules.
  *
- * The TypeScript 6 version used here is controlled by the "typescript-compat"
- * devDependency alias and the "overrides" entries in package.json.
- * All three must be kept in sync when upgrading the shim version.
+ * .npmrc sets legacy-peer-deps=true so npm does not reject the TypeScript 7/ESLint
+ * peer-version mismatch during install.  The typescript-compat devDependency alias
+ * provides the TypeScript 6 shim that is placed here by this script.
  *
  * If new packages that peer-depend on TypeScript <7 are added to the ESLint
  * toolchain, add their nested typescript path to the `destinations` array below.

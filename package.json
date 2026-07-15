@@ -145,13 +145,5 @@
     "typescript-eslint": "^8.64.0",
     "typescript-compat": "npm:typescript@~6.0.3"
   },
-  "overrides": {
-    "typescript-eslint": {
-      "typescript": "~6.0.3"
-    },
-    "ts-api-utils": {
-      "typescript": "~6.0.3"
-    }
-  },
   "license": "MIT"
 }
