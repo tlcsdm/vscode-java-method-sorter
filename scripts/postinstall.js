@@ -32,6 +32,10 @@ const destinations = [
   // typescript-eslint bundles its sub-packages under its own node_modules;
   // they all resolve 'typescript' from this shared parent location.
   path.join(root, 'node_modules', 'typescript-eslint', 'node_modules', 'typescript'),
+  // All @typescript-eslint/* packages are installed flat under node_modules/@typescript-eslint/.
+  // Placing the shim here covers every package in that scope via Node.js module resolution
+  // (they each look up to @typescript-eslint/node_modules/typescript before reaching the root).
+  path.join(root, 'node_modules', '@typescript-eslint', 'node_modules', 'typescript'),
   // ts-api-utils is installed at the root level but also uses the TypeScript API.
   path.join(root, 'node_modules', 'ts-api-utils', 'node_modules', 'typescript'),
 ];
@@ -53,4 +57,4 @@ for (const dest of destinations) {
   fs.cpSync(src, dest, { recursive: true });
 }
 
-console.log('[postinstall] TypeScript 6 shim installed for typescript-eslint and ts-api-utils.');
+console.log('[postinstall] TypeScript 6 shim installed for typescript-eslint, @typescript-eslint/*, and ts-api-utils.');
